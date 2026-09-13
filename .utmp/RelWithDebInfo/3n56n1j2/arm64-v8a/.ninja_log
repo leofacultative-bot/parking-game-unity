@@ -1,0 +1,23 @@
+# ninja log v5
+0	5038	1788992106680659053	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	607b3eedb5566eb5
+3494	3875	1788992105524391455	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	9d048cf9260dd6a
+22	3012	1788992104620374593	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	65c0a0872b0b1f4f
+16	4895	1788992106538044763	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	5e990f4394f9c681
+1	3467	1788992105079383155	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	95bd80eae25a9064
+9	3022	1788992104642375004	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	c1eafe6a7bddb142
+3875	4191	1788992105813396846	/home/leo/Projects/parking-game-unity/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/3n56n1j2/obj/arm64-v8a/libswappywrapper.so	a1ba8b258237e519
+4	4420	1788992106043006509	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	cb4e727d6fb2fbe8
+5535	5581	1788992107232423314	/home/leo/Projects/parking-game-unity/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/3n56n1j2/obj/arm64-v8a/libgame.so	4926166363b15475
+3018	5186	1788992106827742850	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	b687f34f99b370e8
+3022	5535	1788992107179422326	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	613db0b03d26cce5
+61	4818	1789143134629077355	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	65c0a0872b0b1f4f
+52	4935	1789143134759079801	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	c1eafe6a7bddb142
+49	5103	1789143134833081193	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	95bd80eae25a9064
+51	5370	1789143135161947195	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	cb4e727d6fb2fbe8
+5103	5586	1789143135462512042	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	9d048cf9260dd6a
+5587	5993	1789143135858100480	/home/leo/Projects/parking-game-unity/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/3n56n1j2/obj/arm64-v8a/libswappywrapper.so	a1ba8b258237e519
+54	6578	1789143136419521765	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	5e990f4394f9c681
+4827	7126	1789143136971555370	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	b687f34f99b370e8
+48	7427	1789143137267769061	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	607b3eedb5566eb5
+4935	7544	1789143137416302249	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	613db0b03d26cce5
+7545	7628	1789143137498131338	/home/leo/Projects/parking-game-unity/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/3n56n1j2/obj/arm64-v8a/libgame.so	4926166363b15475
