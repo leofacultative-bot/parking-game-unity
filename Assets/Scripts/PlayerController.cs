@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
 
     private CharacterController controller;
     private Camera mainCamera;
+    private Animator animator;
     private Vector3 cameraOffset = new Vector3(0, 3.5f, -6f);
     private float cameraSmooth = 6f;
     private bool isInCar = false;
@@ -37,6 +38,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         mainCamera = Camera.main;
+        animator = GetComponent<Animator>();
 
         controller = GetComponent<CharacterController>();
         if (controller == null)
@@ -145,6 +147,12 @@ public class PlayerController : MonoBehaviour
         // Move
         controller.Move(moveDirection * inputMagnitude * Time.deltaTime);
 
+        // Drive Animator
+        if (animator != null)
+        {
+            animator.SetFloat("Speed", inputMagnitude * (isSprinting ? 1f : 0.5f));
+        }
+
         // Reset flags
         wantsToJump = false;
         wantsToEnterCar = false;
@@ -200,7 +208,9 @@ public class PlayerController : MonoBehaviour
     {
         if (mainCamera == null) return;
 
-        Vector3 targetPos = transform.position + cameraOffset;
+        // Camera orbits behind the player based on player's facing direction
+        Vector3 behindPlayer = -transform.forward * 6f + Vector3.up * 3.5f;
+        Vector3 targetPos = transform.position + behindPlayer;
         mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, targetPos, cameraSmooth * Time.deltaTime);
 
         Vector3 lookTarget = transform.position + Vector3.up * 1.2f;

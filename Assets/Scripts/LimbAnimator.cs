@@ -23,9 +23,12 @@ public class LimbAnimator : MonoBehaviour
 
     private float walkCycle = 0f;
     private float prevSpeed = 0f;
+    private PlayerController pc;
 
     void Start()
     {
+        pc = GetComponent<PlayerController>();
+
         // Find bones by Mixamo naming convention
         spine = FindBone("mixamorig_Spine");
         head = FindBone("mixamorig_Head");
@@ -67,7 +70,6 @@ public class LimbAnimator : MonoBehaviour
 
     void Update()
     {
-        PlayerController pc = GetComponent<PlayerController>();
         if (pc == null || pc.IsInCar) return;
 
         // Get movement speed
@@ -161,11 +163,8 @@ public class LimbAnimator : MonoBehaviour
         if (head != null)
             head.localRotation = headStart;
 
-        // --- BODY BOUNCE ---
-        float bounce = intensity * 0.03f * Mathf.Abs(Mathf.Sin(walkCycle * 2f));
-        Vector3 pos = transform.localPosition;
-        pos.y = bounce;
-        transform.localPosition = pos;
+        // --- BODY BOUNCE (on a child pivot, not the root) ---
+        // Skip — CharacterController handles position
     }
 
     void ReturnToIdle()
@@ -183,10 +182,7 @@ public class LimbAnimator : MonoBehaviour
         if (rightUpperLeg != null) rightUpperLeg.localRotation = Quaternion.Slerp(rightUpperLeg.localRotation, rightUpperLegStart, lerp);
         if (rightLowerLeg != null) rightLowerLeg.localRotation = Quaternion.Slerp(rightLowerLeg.localRotation, rightLowerLegStart, lerp);
 
-        // Reset position
-        Vector3 pos = transform.localPosition;
-        pos.y = Mathf.Lerp(pos.y, 0, lerp);
-        transform.localPosition = pos;
+        // Skip position reset — CharacterController handles position
     }
 
     Transform FindBone(string name)

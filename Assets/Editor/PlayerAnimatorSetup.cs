@@ -2,11 +2,12 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Animations;
+using System.Linq;
 #endif
 
 /// <summary>
-/// Editor script that creates an Animator Controller with walk/idle/run animations.
-/// Run from menu: Tools > Create Player Animator
+/// Creates Animator Controller from the Walking.fbx animation.
+/// Menu: Tools > Create Player Animator
 /// </summary>
 public class PlayerAnimatorSetup
 {
@@ -14,87 +15,100 @@ public class PlayerAnimatorSetup
     [MenuItem("Tools/Create Player Animator")]
     public static void CreateAnimator()
     {
-        // Create Animator Controller
-        string path = "Assets/Resources/Models/Ripley/PlayerAnimator.controller";
-        
-        // Ensure directory exists
-        if (!AssetDatabase.IsValidFolder("Assets/Resources/Models/Ripley"))
+        string controllerPath = "Assets/Resources/Animations/PlayerAnimator.controller";
+
+        // Find the Walking FBX
+        string fbxGUID = AssetDatabase.FindAssets("Walking t:Model")
+            .FirstOrDefault();
+
+        if (fbxGUID == null)
         {
-            Debug.LogError("Ripley folder not found");
+            Debug.LogError("Walking.fbx not found in Assets/Resources/Animations/");
             return;
         }
 
-        AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(path);
+        string fbxPath = AssetDatabase.GUIDToAssetPath(fbxGUID);
+        Debug.Log($"Found Walking FBX at: {fbxPath}");
 
-        // Add parameters
+        // Load all sub-assets (animation clips) from the FBX
+        Object[] subAssets = AssetDatabase.LoadAllAssetsAtPath(fbxPath);
+        AnimationClip[] clips = subAssets.OfType<AnimationClip>().ToArray();
+
+        Debug.Log($"Found {clips.Length} animation clips:");
+        foreach (var c in clips)
+            Debug.Log($"  - {c.name} (frames: {c.length * c.frameRate:F0})");
+
+        if (clips.Length == 0)
+        {
+            Debug.LogError("No animation clips found in Walking.fbx. Make sure it has animations enabled in Import Settings.");
+            return;
+        }
+
+        AnimationClip walkClip = clips[0]; // Use first clip (usually the walk)
+
+        // Create Animator Controller
+        var controller = AnimatorController.CreateAnimatorControllerAtPath(controllerPath);
+
+        // Add parameter
         controller.AddParameter("Speed", AnimatorControllerParameterType.Float);
-        controller.AddParameter("IsGrounded", AnimatorControllerParameterType.Bool);
+
+        // Get the default layer
+        AnimatorControllerLayer layer0 = controller.layers[0];
 
         // Create states
-
-        // Create idle clip
-        AnimationClip idleClip = new AnimationClip();
-        idleClip.name = "Idle";
-        idleClip.frameRate = 30;
-
-        // Create walk clip
-        AnimationClip walkClip = new AnimationClip();
-        walkClip.name = "Walk";
-        walkClip.frameRate = 30;
-
-        // Create run clip
-        AnimationClip runClip = new AnimationClip();
-        runClip.name = "Run";
-        runClip.frameRate = 30;
-
-        // Save clips as assets
-        AssetDatabase.CreateAsset(idleClip, "Assets/Resources/Models/Ripley/Idle.anim");
-        AssetDatabase.CreateAsset(walkClip, "Assets/Resources/Models/Ripley/Walk.anim");
-        AssetDatabase.CreateAsset(runClip, "Assets/Resources/Models/Ripley/Run.anim");
-
-        // Add states to state machine
-        AnimatorControllerLayer layer0 = controller.layers[0];
         AnimatorState idleState = layer0.stateMachine.AddState("Idle", new Vector3(0, 0, 0));
-        idleState.motion = idleClip;
-        idleState.speed = 1f;
+        idleState.motion = walkClip;
+        idleState.speed = 0f; // Freeze on first frame = idle pose
 
         AnimatorState walkState = layer0.stateMachine.AddState("Walk", new Vector3(250, 0, 0));
         walkState.motion = walkClip;
         walkState.speed = 1f;
 
         AnimatorState runState = layer0.stateMachine.AddState("Run", new Vector3(500, 0, 0));
-        runState.motion = runClip;
-        runState.speed = 1f;
+        runState.motion = walkClip;
+        runState.speed = 1.5f; // Faster = running
 
-        // Set default state
+        // Set default
         layer0.stateMachine.defaultState = idleState;
 
         // Transitions
-        AnimatorStateTransition idleToWalk = idleState.AddTransition(walkState);
-        idleToWalk.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
-        idleToWalk.hasExitTime = false;
-        idleToWalk.duration = 0.15f;
+        AnimatorStateTransition t;
 
-        AnimatorStateTransition walkToIdle = walkState.AddTransition(idleState);
-        walkToIdle.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
-        walkToIdle.hasExitTime = false;
-        walkToIdle.duration = 0.15f;
+        // Idle -> Walk
+        t = idleState.AddTransition(walkState);
+        t.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
+        t.hasExitTime = false;
+        t.duration = 0.15f;
 
-        AnimatorStateTransition walkToRun = walkState.AddTransition(runState);
-        walkToRun.AddCondition(AnimatorConditionMode.Greater, 0.6f, "Speed");
-        walkToRun.hasExitTime = false;
-        walkToRun.duration = 0.15f;
+        // Walk -> Idle
+        t = walkState.AddTransition(idleState);
+        t.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+        t.hasExitTime = false;
+        t.duration = 0.15f;
 
-        AnimatorStateTransition runToWalk = runState.AddTransition(walkState);
-        runToWalk.AddCondition(AnimatorConditionMode.Less, 0.6f, "Speed");
-        runToWalk.hasExitTime = false;
-        runToWalk.duration = 0.15f;
+        // Walk -> Run
+        t = walkState.AddTransition(runState);
+        t.AddCondition(AnimatorConditionMode.Greater, 0.6f, "Speed");
+        t.hasExitTime = false;
+        t.duration = 0.15f;
+
+        // Run -> Walk
+        t = runState.AddTransition(walkState);
+        t.AddCondition(AnimatorConditionMode.Less, 0.6f, "Speed");
+        t.hasExitTime = false;
+        t.duration = 0.15f;
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
-        Debug.Log("Player Animator Controller created at: " + path);
-        EditorUtility.DisplayDialog("Done", "Animator Controller created!\n\nAssign it to the player's Animator component.\nStates: Idle, Walk, Run\nParameter: Speed (float)", "OK");
+        Debug.Log($"Animator Controller created at: {controllerPath}");
+        EditorUtility.DisplayDialog("Done",
+            $"Animator Controller created!\n\n" +
+            $"Clip: {walkClip.name}\n" +
+            $"States: Idle, Walk, Run\n" +
+            $"Parameter: Speed (float)\n\n" +
+            "The controller will be auto-assigned to the player on next play.",
+            "OK");
     }
 #endif
 }
