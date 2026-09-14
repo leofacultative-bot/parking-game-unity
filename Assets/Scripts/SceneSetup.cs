@@ -147,6 +147,7 @@ public class SceneSetup : MonoBehaviour
         Animator anim = player.GetComponent<Animator>();
         if (anim == null)
             anim = player.AddComponent<Animator>();
+
         RuntimeAnimatorController runtimeController = Resources.Load<RuntimeAnimatorController>("Animations/PlayerAnimator");
         if (runtimeController != null)
         {
@@ -155,8 +156,12 @@ public class SceneSetup : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("PlayerAnimator.controller not found — run Tools > Create Player Animator in Unity Editor");
+            Debug.LogWarning("PlayerAnimator.controller not found — using procedural walk");
         }
+
+        // Procedural walk animation (always added — works without Animator clips)
+        if (player.GetComponent<LimbAnimator>() == null)
+            player.AddComponent<LimbAnimator>();
 
         return player;
     }

@@ -6,7 +6,8 @@ using System.Linq;
 #endif
 
 /// <summary>
-/// Creates a proper walking animation and Animator Controller for the player.
+/// Creates Animator Controller using the Walking.fbx animation clip.
+/// Both models must be Humanoid (animationType=3) for retargeting to work.
 /// Menu: Tools > Create Player Animator
 /// </summary>
 public class PlayerAnimatorSetup
@@ -17,56 +18,62 @@ public class PlayerAnimatorSetup
     {
         string animDir = "Assets/Resources/Animations";
 
-        // === 1. Create a walking animation clip ===
-        AnimationClip walkClip = new AnimationClip();
-        walkClip.name = "WalkCycle";
-        walkClip.frameRate = 30;
+        // Find Walking.fbx animation clips (must be reimported as Humanoid)
+        string fbxGUID = AssetDatabase.FindAssets("Walking t:Model")
+            .FirstOrDefault(g => AssetDatabase.GUIDToAssetPath(g).Contains("Animations"));
 
-        // Simple walk cycle: leg forward/back, arm swing
-        // Left leg forward
-        AddCurve(walkClip, "mixamorig:Hips/mixamorig:LeftUpLeg", "localEulerAngles.z", 
-            new Keyframe[] { new Keyframe(0, 15), new Keyframe(0.5f, -15), new Keyframe(1, 15) });
-        // Right leg forward (opposite)
-        AddCurve(walkClip, "mixamorig:Hips/mixamorig:RightUpLeg", "localEulerAngles.z", 
-            new Keyframe[] { new Keyframe(0, -15), new Keyframe(0.5f, 15), new Keyframe(1, -15) });
-        // Left arm swing (opposite to left leg)
-        AddCurve(walkClip, "mixamorig:Hips/mixamorig:Spine/mixamorig:Spine1/mixamorig:LeftShoulder/mixamorig:LeftArm", "localEulerAngles.z", 
-            new Keyframe[] { new Keyframe(0, -12), new Keyframe(0.5f, 12), new Keyframe(1, -12) });
-        // Right arm swing
-        AddCurve(walkClip, "mixamorig:Hips/mixamorig:Spine/mixamorig:Spine1/mixamorig:RightShoulder/mixamorig:RightArm", "localEulerAngles.z", 
-            new Keyframe[] { new Keyframe(0, 12), new Keyframe(0.5f, -12), new Keyframe(1, 12) });
-        // Hip bounce
-        AddCurve(walkClip, "mixamorig:Hips", "localPosition.y", 
-            new Keyframe[] { new Keyframe(0, 0), new Keyframe(0.25f, 0.02f), new Keyframe(0.5f, 0), new Keyframe(0.75f, 0.02f), new Keyframe(1, 0) });
-        // Spine twist
-        AddCurve(walkClip, "mixamorig:Hips/mixamorig:Spine", "localEulerAngles.y", 
-            new Keyframe[] { new Keyframe(0, 3), new Keyframe(0.5f, -3), new Keyframe(1, 3) });
+        if (string.IsNullOrEmpty(fbxGUID))
+        {
+            Debug.LogError("Walking.fbx not found in Animations folder");
+            return;
+        }
 
-        AssetDatabase.CreateAsset(walkClip, animDir + "/WalkCycle.anim");
+        string fbxPath = AssetDatabase.GUIDToAssetPath(fbxGUID);
+        Debug.Log($"Found: {fbxPath}");
 
-        // === 2. Create idle animation (first frame of walk) ===
-        AnimationClip idleClip = new AnimationClip();
-        idleClip.name = "Idle";
-        idleClip.frameRate = 30;
-        // Just keep hips at rest
-        AddCurve(idleClip, "mixamorig:Hips", "localPosition.y", 
-            new Keyframe[] { new Keyframe(0, 0) });
-        AssetDatabase.CreateAsset(idleClip, animDir + "/Idle.anim");
+        // Load all sub-assets
+        Object[] subAssets = AssetDatabase.LoadAllAssetsAtPath(fbxPath);
+        AnimationClip[] clips = subAssets.OfType<AnimationClip>().ToArray();
+        Debug.Log($"Animation clips found: {clips.Length}");
+        foreach (var c in clips)
+            Debug.Log($"  Clip: {c.name}, length={c.length:F2}s, frames={c.frameRate}");
 
-        // === 3. Create Animator Controller ===
+        if (clips.Length == 0)
+        {
+            Debug.LogError("No animation clips found. Make sure Walking.fbx is set to Humanoid (animationType=3) in its import settings.");
+            return;
+        }
+
+        AnimationClip walkClip = clips[0];
+        Debug.Log($"Using clip: {walkClip.name}");
+
+        // Delete old procedural clips if they exist
+        if (AssetDatabase.LoadAssetAtPath<AnimationClip>(animDir + "/WalkCycle.anim") != null)
+            AssetDatabase.DeleteAsset(animDir + "/WalkCycle.anim");
+        if (AssetDatabase.LoadAssetAtPath<AnimationClip>(animDir + "/Idle.anim") != null)
+            AssetDatabase.DeleteAsset(animDir + "/Idle.anim");
+
+        // Create Animator Controller
         string controllerPath = animDir + "/PlayerAnimator.controller";
+        if (AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(controllerPath) != null)
+            AssetDatabase.DeleteAsset(controllerPath);
+
         var controller = AnimatorController.CreateAnimatorControllerAtPath(controllerPath);
         controller.AddParameter("Speed", AnimatorControllerParameterType.Float);
 
         AnimatorControllerLayer layer0 = controller.layers[0];
 
+        // Idle = walk clip at speed 0 (freeze on first frame)
         AnimatorState idleState = layer0.stateMachine.AddState("Idle", new Vector3(0, 0, 0));
-        idleState.motion = idleClip;
+        idleState.motion = walkClip;
+        idleState.speed = 0f;
 
+        // Walk = walk clip at normal speed
         AnimatorState walkState = layer0.stateMachine.AddState("Walk", new Vector3(250, 0, 0));
         walkState.motion = walkClip;
         walkState.speed = 1f;
 
+        // Run = walk clip at faster speed
         AnimatorState runState = layer0.stateMachine.AddState("Run", new Vector3(500, 0, 0));
         runState.motion = walkClip;
         runState.speed = 1.6f;
@@ -75,6 +82,7 @@ public class PlayerAnimatorSetup
 
         // Transitions
         AnimatorStateTransition t;
+
         t = idleState.AddTransition(walkState);
         t.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
         t.hasExitTime = false;
@@ -98,35 +106,7 @@ public class PlayerAnimatorSetup
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
-        Debug.Log("Player Animator created: WalkCycle.anim, Idle.anim, PlayerAnimator.controller");
-        EditorUtility.DisplayDialog("Done",
-            "Created:\n- WalkCycle.anim (procedural walk)\n- Idle.anim\n- PlayerAnimator.controller\n\n" +
-            "The player will automatically use these.", "OK");
-    }
-
-    static void AddCurve(AnimationClip clip, string path, string property, Keyframe[] keys)
-    {
-        // Map property names to binding types
-        string[] parts = property.Split('.');
-        string prop = parts[parts.Length - 1];
-
-        EditorCurveBinding binding = new EditorCurveBinding();
-        binding.path = path;
-        binding.type = typeof(Transform);
-
-        if (prop == "localPosition.y")
-            binding.propertyName = "m_LocalPosition.y";
-        else if (prop == "localEulerAngles.z")
-            binding.propertyName = "m_LocalEulerAngles.z";
-        else if (prop == "localEulerAngles.y")
-            binding.propertyName = "m_LocalEulerAngles.y";
-        else if (prop == "localEulerAngles.x")
-            binding.propertyName = "m_LocalEulerAngles.x";
-        else
-            binding.propertyName = prop;
-
-        AnimationCurve curve = new AnimationCurve(keys);
-        AnimationUtility.SetEditorCurve(clip, binding, curve);
+        Debug.Log("Done! Animator Controller created with real walking animation.");
     }
 #endif
 }
