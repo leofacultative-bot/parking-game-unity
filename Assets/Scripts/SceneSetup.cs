@@ -134,6 +134,11 @@ public class SceneSetup : MonoBehaviour
             player = Instantiate(ripleyPrefab, pos, Quaternion.identity);
             player.name = "Player";
             player.transform.localScale = new Vector3(3f, 3f, 3f);
+            // The CINEMA_4D_Editor mesh child has ~170° Y rotation, making the visible
+            // mesh face -Z while transform.forward is +Z. Rotating the root 180° aligns
+            // the mesh's visual face with transform.forward, so the third-person camera
+            // (+transform.forward * 6) correctly sees the back of the character.
+            player.transform.rotation = Quaternion.Euler(0, 180, 0);
         }
         else
         {

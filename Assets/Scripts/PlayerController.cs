@@ -50,9 +50,10 @@ public class PlayerController : MonoBehaviour
 
         if (mainCamera != null)
         {
-            // Camera behind the player (mesh faces -Z due to 170° child rotation,
-            // so -transform.forward puts camera behind the visible mesh)
-            Vector3 behindPlayer = -transform.forward * 6f + Vector3.up * 3.5f;
+            // Camera behind the player.
+            // The mesh (CINEMA_4D_Editor) has 170° Y rotation, so it visually faces -Z.
+            // transform.forward is +Z. So +transform.forward puts camera at +Z = behind the mesh.
+            Vector3 behindPlayer = transform.forward * 6f + Vector3.up * 3.5f;
             mainCamera.transform.position = transform.position + behindPlayer;
             mainCamera.transform.LookAt(transform.position + Vector3.up * 1.2f);
         }
@@ -216,8 +217,8 @@ public class PlayerController : MonoBehaviour
     {
         if (mainCamera == null) return;
 
-        // Camera behind the player (see Start() comment about -Z mesh facing)
-        Vector3 behindPlayer = -transform.forward * 6f + Vector3.up * 3.5f;
+        // Camera behind the player (see Start() comment about mesh orientation)
+        Vector3 behindPlayer = transform.forward * 6f + Vector3.up * 3.5f;
         Vector3 targetPos = transform.position + behindPlayer;
         mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, targetPos, cameraSmooth * Time.deltaTime);
 
