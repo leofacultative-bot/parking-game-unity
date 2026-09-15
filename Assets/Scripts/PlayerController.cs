@@ -50,8 +50,9 @@ public class PlayerController : MonoBehaviour
 
         if (mainCamera != null)
         {
-        // Start camera behind the player
-        Vector3 behindPlayer = transform.forward * 6f + Vector3.up * 3.5f;
+            // Camera behind the player (mesh faces -Z due to 170° child rotation,
+            // so -transform.forward puts camera behind the visible mesh)
+            Vector3 behindPlayer = -transform.forward * 6f + Vector3.up * 3.5f;
             mainCamera.transform.position = transform.position + behindPlayer;
             mainCamera.transform.LookAt(transform.position + Vector3.up * 1.2f);
         }
@@ -74,14 +75,6 @@ public class PlayerController : MonoBehaviour
     void LateUpdate()
     {
         UpdateCamera();
-
-        // Debug: print camera position info once
-        if (Time.time < 2f && Time.deltaTime > 0)
-        {
-            Vector3 toCam = (mainCamera.transform.position - transform.position).normalized;
-            float dot = Vector3.Dot(toCam, transform.forward);
-            Debug.Log($"[CAM DEBUG] forward={transform.forward}, toCam={toCam}, dot={dot:F2}, camPos={mainCamera.transform.position}, playerPos={transform.position}");
-        }
     }
 
     void ReadInput()
@@ -154,11 +147,13 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // Apply gravity
+        // Apply gravity (always, even when inputMagnitude is 0)
         moveDirection.y -= gravity * Time.deltaTime;
 
-        // Move
-        controller.Move(moveDirection * inputMagnitude * Time.deltaTime);
+        // Move — inputMagnitude only affects horizontal, gravity always applies
+        Vector3 horizontalMove = new Vector3(moveDirection.x, 0, moveDirection.z) * inputMagnitude;
+        horizontalMove.y = moveDirection.y; // gravity component is independent
+        controller.Move(horizontalMove * Time.deltaTime);
 
         // Drive Animator
         if (animator != null)
@@ -221,8 +216,8 @@ public class PlayerController : MonoBehaviour
     {
         if (mainCamera == null) return;
 
-        // Camera behind the player
-        Vector3 behindPlayer = transform.forward * 6f + Vector3.up * 3.5f;
+        // Camera behind the player (see Start() comment about -Z mesh facing)
+        Vector3 behindPlayer = -transform.forward * 6f + Vector3.up * 3.5f;
         Vector3 targetPos = transform.position + behindPlayer;
         mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, targetPos, cameraSmooth * Time.deltaTime);
 
