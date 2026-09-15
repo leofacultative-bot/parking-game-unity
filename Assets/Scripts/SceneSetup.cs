@@ -143,23 +143,7 @@ public class SceneSetup : MonoBehaviour
         // Add PlayerController
         PlayerController pc = player.AddComponent<PlayerController>();
 
-        // Set up Animator with walking animation
-        Animator anim = player.GetComponent<Animator>();
-        if (anim == null)
-            anim = player.AddComponent<Animator>();
-
-        RuntimeAnimatorController runtimeController = Resources.Load<RuntimeAnimatorController>("Animations/PlayerAnimator");
-        if (runtimeController != null)
-        {
-            anim.runtimeAnimatorController = runtimeController;
-            Debug.Log("Assigned walking animation to player");
-        }
-        else
-        {
-            Debug.LogWarning("PlayerAnimator.controller not found — using procedural walk");
-        }
-
-        // Procedural walk animation (always added — works without Animator clips)
+        // Procedural walk animation — no Animator needed
         if (player.GetComponent<LimbAnimator>() == null)
             player.AddComponent<LimbAnimator>();
 

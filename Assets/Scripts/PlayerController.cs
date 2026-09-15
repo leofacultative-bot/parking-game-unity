@@ -18,8 +18,7 @@ public class PlayerController : MonoBehaviour
     private CharacterController controller;
     private Camera mainCamera;
     private Animator animator;
-    private Vector3 cameraOffset = new Vector3(0, 3.5f, -6f);
-    private float cameraSmooth = 6f;
+    private float cameraSmooth = 20f;
     private bool isInCar = false;
     private GameObject currentCar;
     private Vector3 moveDirection = Vector3.zero;
@@ -51,7 +50,9 @@ public class PlayerController : MonoBehaviour
 
         if (mainCamera != null)
         {
-            mainCamera.transform.position = transform.position + cameraOffset;
+        // Start camera behind the player
+        Vector3 behindPlayer = transform.forward * 6f + Vector3.up * 3.5f;
+            mainCamera.transform.position = transform.position + behindPlayer;
             mainCamera.transform.LookAt(transform.position + Vector3.up * 1.2f);
         }
     }
@@ -68,7 +69,19 @@ public class PlayerController : MonoBehaviour
         ReadInput();
         HandleMovement();
         HandleCarEntry();
+    }
+
+    void LateUpdate()
+    {
         UpdateCamera();
+
+        // Debug: print camera position info once
+        if (Time.time < 2f && Time.deltaTime > 0)
+        {
+            Vector3 toCam = (mainCamera.transform.position - transform.position).normalized;
+            float dot = Vector3.Dot(toCam, transform.forward);
+            Debug.Log($"[CAM DEBUG] forward={transform.forward}, toCam={toCam}, dot={dot:F2}, camPos={mainCamera.transform.position}, playerPos={transform.position}");
+        }
     }
 
     void ReadInput()
@@ -208,8 +221,8 @@ public class PlayerController : MonoBehaviour
     {
         if (mainCamera == null) return;
 
-        // Camera orbits behind the player based on player's facing direction
-        Vector3 behindPlayer = -transform.forward * 6f + Vector3.up * 3.5f;
+        // Camera behind the player
+        Vector3 behindPlayer = transform.forward * 6f + Vector3.up * 3.5f;
         Vector3 targetPos = transform.position + behindPlayer;
         mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, targetPos, cameraSmooth * Time.deltaTime);
 

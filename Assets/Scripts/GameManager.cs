@@ -16,12 +16,8 @@ public class GameManager : MonoBehaviour
 
     void LateUpdate()
     {
-        if (car != null && mainCamera != null)
-        {
-            Vector3 targetPos = car.transform.position + car.transform.rotation * cameraOffset;
-            mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, targetPos, cameraSmooth * Time.deltaTime);
-            mainCamera.transform.LookAt(car.transform.position + Vector3.up * 1f);
-        }
+        // Camera is handled by PlayerController (on foot) and CarController (in car).
+        // GameManager does NOT move the camera.
     }
 
     public void ResetCar()
